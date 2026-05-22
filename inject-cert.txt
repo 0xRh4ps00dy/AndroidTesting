@@ -1,0 +1,1 @@
+adb root && adb shell sh /storage/self/primary/inject_cert_android.sh 9a5ba575.0
