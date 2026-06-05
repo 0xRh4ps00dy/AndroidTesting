@@ -1,1 +1,1 @@
-adb root && adb shell sh /storage/self/primary/inject_cert_android.sh 9a5ba575.0
+adb shell "su -c 'sh /storage/self/primary/inyectar_certificado.sh 9a5ba575.0'"

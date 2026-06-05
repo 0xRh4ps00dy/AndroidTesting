@@ -1,8 +1,10 @@
-# Android SSL Pinning Bypass (No-Frida)
+# Android SSL Pinning Bypass (No-Frida & Frida Option)
 
-Este proyecto proporciona un conjunto de herramientas y scripts automatizados en Bash para realizar el bypass de SSL Pinning en Emuladores de Android (AVDs) que tienen instalada la tienda **Google Play Store** o de desarrollo (**Google APIs**), todo esto **sin necesidad de utilizar Frida**.
+Este proyecto proporciona un conjunto de herramientas y scripts automatizados en Bash para realizar el bypass de SSL Pinning en Emuladores de Android (AVDs) que tienen instalada la tienda **Google Play Store** o de desarrollo (**Google APIs**).
 
-El método se basa en inyectar el certificado CA de tu herramienta de interceptación (como Burp Suite o Caido) dentro del almacén de credenciales del sistema (`System Authority`) y configurar el enrutamiento del proxy.
+Ofrece dos métodos de funcionamiento:
+1. **Método Sin Frida (Defectuoso en Apps Grandes):** Inyección del certificado a nivel de sistema (`System Authority`). Excelente para la mayoría de las apps (ej: Marca).
+2. **Método Con Frida (Recomendado para Apps Complejas):** Modificación en tiempo de ejecución de las llamadas SSL. Indispensable para apps con SSL Pinning estricto *hardcoded* (ej: YouTube, Facebook).
 
 ## 📋 Requisitos Previos
 
@@ -11,13 +13,14 @@ Antes de ejecutar los scripts, asegúrate de cumplir con los siguientes requisit
 1. **Android Studio** instalado junto con el SDK y las herramientas de plataforma (`platform-tools` que incluye `adb` en el PATH).
 2. Un emulador Android (AVD) encendido.
 3. El AVD debe tener privilegios de root (vía `adb root` nativo en imágenes "Google APIs", o rooteado con Magisk/rootAVD en imágenes de "Google Play").
-4. Las dependencias `adb` y `openssl` instaladas en tu sistema host.
+4. Las dependencias `adb`, `openssl` y `xz-utils` instaladas en tu sistema host.
+5. Para el método con Frida: tener instalado `frida-tools` (`pip install frida-tools`).
 
 ---
 
-## 🚀 Uso Rápido (Bypass Directo)
+## 🚀 Método 1: Bypass Sin Frida (Certificado del Sistema)
 
-Para configurar el bypass de SSL Pinning de manera directa sin preguntas, ejecuta el siguiente comando:
+Para configurar el bypass de SSL Pinning tradicional e inyectar el certificado CA en el almacén de credenciales del emulador, ejecuta:
 
 ```bash
 bash bypass_ssl_directo.sh --cert ~/Documents/burpsuite.der --type burp --proxy-ip 192.168.1.137 --proxy-port 8080
@@ -25,38 +28,30 @@ bash bypass_ssl_directo.sh --cert ~/Documents/burpsuite.der --type burp --proxy-
 
 ---
 
+## 🚀 Método 2: Bypass Con Frida (Para YouTube, Facebook, etc.)
+
+Para saltar las comprobaciones de SSL Pinning avanzadas en memoria ejecutando automáticamente `frida-server` en el emulador y lanzando el script interceptor:
+
+```bash
+./iniciar_frida_bypass.sh [nombre_del_paquete_app]
+# Ejemplo para YouTube:
+./iniciar_frida_bypass.sh com.google.android.youtube
+```
+
+*Este script detectará la arquitectura del dispositivo, descargará automáticamente la versión de `frida-server` coincidente con tu host, la subirá, la iniciará como root en background y ejecutará el hooking.*
+
+---
+
 ## 🛠️ Herramientas Incluidas en la Raíz
 
-El repositorio contiene cuatro herramientas esenciales renombradas para mayor facilidad:
+El repositorio contiene las siguientes herramientas:
 
-### 1. Asistente Interactivo: `asistente_bypass_ssl.sh`
-Un menú interactivo que te guía de manera guiada a verificar dependencias, rootear con Magisk, inyectar el certificado y activar/desactivar el proxy de forma cómoda.
-
-**Ejecución:**
-```bash
-chmod +x asistente_bypass_ssl.sh
-./asistente_bypass_ssl.sh
-```
-
-### 2. Bypass Directo: `bypass_ssl_directo.sh`
-El script principal por línea de comandos automatizado sin menús visuales.
-
-**Sintaxis:**
-```bash
-bash bypass_ssl_directo.sh --cert <ruta_al_certificado> --type <burp|caido> [--proxy-ip <ip_host>] [--proxy-port <puerto>]
-```
-
-### 3. Conmutador Rápido de Proxy: `conmutar_proxy.sh`
-Un script para activar y desactivar con un solo comando la redirección de tráfico al proxy interceptor, ideal para cuando se necesita descargar apps de tiendas que no permiten proxies.
-
-**Ejecución (activa/desactiva alternando):**
-```bash
-./conmutar_proxy.sh [IP:PUERTO]
-# Ejemplo: ./conmutar_proxy.sh
-```
-
-### 4. Instalador de Tienda Aurora: `instalar_aurora.sh`
-Un script de descarga e instalación rápida para **Aurora Store** en el emulador, útil en imágenes "Google APIs" donde no hay Play Store oficial preinstalada.
+* **`asistente_bypass_ssl.sh`:** Asistente interactivo guiado por menús en la terminal.
+* **`bypass_ssl_directo.sh`:** Script principal por argumentos en línea de comandos.
+* **`conmutar_proxy.sh`:** Activa y desactiva con un solo comando la redirección de tráfico al proxy interceptor.
+* **`instalar_aurora.sh`:** Instala de forma rápida **Aurora Store** (tienda alternativa para descargar apps de Google Play).
+* **`iniciar_frida_bypass.sh`:** Automatiza el arranque de Frida y la inyección en caliente de `bypass-ssl.js`.
+* **`bypass-ssl.js`:** Script JavaScript universal de hooking para Frida (intercepta OkHttp3, WebView, TrustManager, etc.).
 
 ---
 
@@ -66,9 +61,15 @@ Un script de descarga e instalación rápida para **Aurora Store** en el emulado
 Este script secundario se localiza dentro de la carpeta `scripts/` y realiza las modificaciones de namespaces y sistemas de archivos temporales (`tmpfs`) dentro del sistema de archivos interno de Android. Se encarga de sobreescribir de forma transitoria el almacén inmuntable de APEX Conscrypt en Android 10-17.
 
 **Ejecución manual si reinicias el dispositivo:**
-```bash
-adb root && adb shell sh /storage/self/primary/inyectar_certificado.sh <HASH_DEL_CERTIFICADO>.0
-```
+
+* Si usas una imagen **Google APIs** (con root nativo):
+  ```bash
+  adb root && adb shell sh /storage/self/primary/inyectar_certificado.sh <HASH_DEL_CERTIFICADO>.0
+  ```
+* Si usas una imagen **Google Play Store** (rooteada con Magisk):
+  ```bash
+  adb shell "su -c 'sh /storage/self/primary/inyectar_certificado.sh <HASH_DEL_CERTIFICADO>.0'"
+  ```
 
 ---
 
