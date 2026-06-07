@@ -50,6 +50,7 @@ El repositorio contiene las siguientes herramientas:
 * **`bypass_ssl_directo.sh`:** Script principal por argumentos en línea de comandos.
 * **`conmutar_proxy.sh`:** Activa y desactiva con un solo comando la redirección de tráfico al proxy interceptor.
 * **`instalar_aurora.sh`:** Instala de forma rápida **Aurora Store** (tienda alternativa para descargar apps de Google Play).
+* **`instalar_xapk.sh`:** Automatiza la descompresión e instalación de paquetes múltiples (`.xapk`, `.apks`, `.zip`) forzando la procedencia desde Google Play (`com.android.vending`) y filtrando los splits de arquitectura de CPU no compatibles con el emulador.
 * **`iniciar_frida_bypass.sh`:** Automatiza el arranque de Frida y la inyección en caliente de `bypass-ssl.js`.
 * **`bypass-ssl.js`:** Script JavaScript universal de hooking para Frida (intercepta OkHttp3, WebView, TrustManager, etc.).
 
