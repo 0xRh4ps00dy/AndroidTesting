@@ -127,3 +127,49 @@ También con comandos adb directos:
 ```bash
 adb shell settings put global http_proxy :0
 ```
+
+---
+
+## 🔍 Solución de Problemas: Google Play Store no descarga o no carga imágenes con el Proxy activo
+
+La **Google Play Store implementa SSL Pinning estricto**. Cuando el proxy (ej. Burp Suite) está activo, la tienda detecta la interceptación y bloquea las conexiones, impidiendo descargar aplicaciones o ver imágenes.
+
+Para solucionar esto, tienes tres alternativas:
+
+### Alternativa 1: Apagar temporalmente el proxy
+1. Desactiva el proxy para permitir la conexión limpia con los servidores de Google:
+   ```powershell
+   .\conmutar_proxy.ps1
+
+   powershell -ExecutionPolicy Bypass -File .\conmutar_proxy.ps1
+   ```
+2. Instala la aplicación deseada desde la Google Play Store oficial en el emulador.
+3. Vuelve a activar el proxy para comenzar a interceptar el tráfico de tu aplicación:
+   ```powershell
+   .\conmutar_proxy.ps1
+
+   powershell -ExecutionPolicy Bypass -File .\conmutar_proxy.ps1
+
+   ```
+
+### Alternativa 2: Usar Aurora Store (Recomendado para evitar alternar el proxy)
+**Aurora Store** es un cliente alternativo de Google Play Store que no impone las mismas restricciones y funciona correctamente con proxies.
+1. Instala Aurora Store en tu emulador:
+   ```powershell
+   .\instalar_aurora.ps1
+
+   powershell -ExecutionPolicy Bypass -File .\instalar_aurora.ps1
+
+   ```
+2. Abre la aplicación **Aurora Store** en el emulador.
+3. Inicia sesión en modo **Anónimo** (no requiere tu cuenta personal).
+4. Busca y descarga la aplicación que necesites.
+
+### Alternativa 3: Instalar un archivo APK/XAPK local
+Si tienes el archivo `.apk` o `.xapk` descargado en tu ordenador:
+```powershell
+.\instalar_xapk.ps1 "C:\ruta\al\archivo.apk"
+
+powershell -ExecutionPolicy Bypass -File .\instalar_xapk.ps1 "C:\Ruta\A\Tu\App.apk"
+
+```
