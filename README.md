@@ -33,7 +33,7 @@ bash bypass_ssl_directo.sh --cert ~/Documents/burpsuite.der --type burp --proxy-
 
 ### Windows (PowerShell):
 ```powershell
-.\bypass_ssl_directo.ps1 -Cert C:\Users\usuario\Documents\burpsuite.der -Type burp -ProxyIp 192.168.1.137 -ProxyPort 8080
+.\bypass_ssl_directo.ps1 -Cert C:\Users\marco\Documents\cacert.der -Type burp -ProxyIp 192.168.1.137 -ProxyPort 8080
 ```
 
 > [!IMPORTANT]
