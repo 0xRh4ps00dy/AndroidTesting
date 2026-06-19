@@ -6,9 +6,9 @@
 # =============================================================================
 
 param (
-    [string]$Cert,
-    [string]$Type,
-    [string]$ProxyIp,
+    [string]$Cert = "C:\Users\marco\Documents\cacert.der",
+    [string]$Type = "burp",
+    [string]$ProxyIp = "192.168.1.137",
     [string]$ProxyPort = "8080",
     [switch]$Disconnect
 )
@@ -29,7 +29,7 @@ if ($args[0] -eq "disconnect") {
     $Disconnect = $true
 }
 
-$INJECT_SCRIPT = Join-Path $PSScriptRoot "scripts\inyectar_certificado.sh"
+$INJECT_SCRIPT = Join-Path $PSScriptRoot "inyectar_certificado.sh"
 
 # --------------------------------------------------------------------------- #
 # Funciones auxiliares
@@ -238,7 +238,12 @@ function Run-RootAvdIfNeeded {
     Push-Location $rootavdDir
     try {
         $env:TMP_RAMDISK_PATH = $ramdiskPath
-        & cmd.exe /c "rootAVD.bat %TMP_RAMDISK_PATH%"
+        if ([int]$sdkVer -ge 33) {
+            Log-Info "Android 13+ detectado (API $sdkVer). Usando FAKEBOOTIMG..."
+            & cmd.exe /c "rootAVD.bat %TMP_RAMDISK_PATH% FAKEBOOTIMG"
+        } else {
+            & cmd.exe /c "rootAVD.bat %TMP_RAMDISK_PATH%"
+        }
     } finally {
         $env:TMP_RAMDISK_PATH = $null
         Pop-Location
@@ -396,7 +401,11 @@ function Main {
     Log-Warn "NOTA: Cada vez que reinicies el AVD, debes volver a"
     Log-Warn "ejecutar la inyeccion del certificado:"
     Write-Host ""
-    Write-Host "     adb root && adb shell sh /storage/self/primary/inyectar_certificado.sh $certAndroidName" -ForegroundColor Yellow
+    if (Check-MagiskSu) {
+        Write-Host "     adb shell `"su -c 'sh /storage/self/primary/inyectar_certificado.sh $certAndroidName'`"" -ForegroundColor Yellow
+    } else {
+        Write-Host "     adb root && adb shell sh /storage/self/primary/inyectar_certificado.sh $certAndroidName" -ForegroundColor Yellow
+    }
     Write-Host ""
 
     # Limpieza local
